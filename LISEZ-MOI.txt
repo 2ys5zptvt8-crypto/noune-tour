@@ -1,0 +1,43 @@
+SENTIERS — appli de randos en boucle autour de soi
+====================================================
+
+Ce dossier contient toute l'appli. Elle doit être mise en ligne une fois
+(gratuitement) pour pouvoir être installée sur l'iPhone. Ensuite, tout est
+stocké sur le téléphone : boucles, cartes, historique.
+
+1. METTRE L'APPLI EN LIGNE (5 minutes, une seule fois)
+   - Va sur https://app.netlify.com/drop et crée un compte gratuit.
+   - Glisse-dépose le dossier « sentiers » (dézippé) dans la page.
+   - Netlify te donne une adresse du type https://xxxx.netlify.app
+     (tu peux la renommer dans « Site configuration »).
+   Alternative : GitHub Pages ou Cloudflare Pages, même principe.
+
+2. CRÉER LA CLÉ GRATUITE DE CALCUL DES BOUCLES
+   - Va sur https://openrouteservice.org et inscris-toi (gratuit).
+   - Dans le tableau de bord, crée une clé (Token / API Key) et copie-la.
+
+3. INSTALLER SUR L'IPHONE
+   - Ouvre l'adresse Netlify dans SAFARI.
+   - Bouton Partager → « Sur l'écran d'accueil ».
+   - Ouvre Sentiers depuis son icône (important : c'est l'appli installée
+     qui garde les données, pas l'onglet Safari).
+   - Autorise la localisation.
+   - Réglages → colle la clé → Enregistrer → Tester.
+
+4. UTILISATION
+   - Explorer : choisir une distance → « Proposer des boucles ».
+     Toucher la carte pour changer le point de départ.
+   - Sur une boucle : « Garder pour hors ligne » télécharge la carte autour
+     du parcours (avec du réseau, idéalement en Wi-Fi).
+   - Mes boucles → Démarrer : suit le parcours et enregistre le trajet GPS,
+     même sans réseau. Alerte si on s'éloigne du parcours.
+   - Historique : toutes les randos terminées, avec leur tracé.
+
+LIMITES À CONNAÎTRE
+   - Garder l'écran allumé pendant la rando : iOS met en pause le GPS des
+     applis web quand l'écran est verrouillé (l'appli demande à l'écran de
+     rester allumé, sur iOS 18.4 et plus).
+   - Le calcul des boucles a besoin d'Internet ; tout le reste marche hors ligne.
+   - Fonds de carte IGN : couverture France uniquement.
+   - Quota gratuit openrouteservice : largement suffisant (chaque recherche
+     utilise 6 à 9 requêtes).

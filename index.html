@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#1f3a2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sentiers">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<link rel="stylesheet" href="style.css">
+<title>Sentiers</title>
+</head>
+<body>
+<div id="map"></div>
+
+<div id="banner" hidden></div>
+<button id="locate" class="fab" aria-label="Me localiser">
+  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8" fill="none"/></svg>
+</button>
+
+<section id="sheet">
+  <button id="handle" aria-label="Agrandir ou réduire"><span></span></button>
+  <div class="sheet-body">
+
+    <!-- EXPLORER -->
+    <div class="view" data-view="explore">
+      <div id="installTip" class="tip" hidden>
+        <strong>Installe l'appli d'abord</strong>
+        Dans Safari : bouton <b>Partager</b> puis <b>Sur l'écran d'accueil</b>. Ouvre ensuite Sentiers depuis son icône : c'est là que tes boucles et ton historique seront gardés.
+      </div>
+      <h1>Où marcher aujourd'hui&nbsp;?</h1>
+      <p class="muted" id="startInfo">Départ : ta position GPS</p>
+      <div class="dist-row">
+        <div class="dist-big"><span id="distVal">8</span><small> km</small></div>
+        <div class="chips" id="presets">
+          <button data-km="5">5</button><button data-km="8">8</button><button data-km="12">12</button><button data-km="18">18</button>
+        </div>
+      </div>
+      <input type="range" id="dist" min="2" max="30" step="0.5" value="8" aria-label="Distance en kilomètres">
+      <button id="search" class="primary">Proposer des boucles</button>
+      <p class="hint">Touche la carte pour choisir un autre point de départ.</p>
+      <div id="results"></div>
+    </div>
+
+    <!-- MES BOUCLES -->
+    <div class="view" data-view="routes" hidden>
+      <h1>Mes boucles</h1>
+      <p class="muted">Gardées sur ton téléphone, avec la carte pour marcher sans réseau.</p>
+      <button id="freeHike" class="secondary">Enregistrer une rando libre</button>
+      <div id="routesList"></div>
+    </div>
+
+    <!-- HISTORIQUE -->
+    <div class="view" data-view="history" hidden>
+      <h1>Historique</h1>
+      <div id="historyStats" class="stats-strip"></div>
+      <div id="historyList"></div>
+    </div>
+
+    <!-- REGLAGES -->
+    <div class="view" data-view="settings" hidden>
+      <h1>Réglages</h1>
+      <div class="card">
+        <h2>Clé de calcul des boucles</h2>
+        <p class="muted">Gratuite, à créer une seule fois sur openrouteservice.org (inscription, puis dans ton tableau de bord, crée une clé « Token » / « API Key »). Colle-la ici.</p>
+        <div class="key-row">
+          <input id="keyInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Colle ta clé ici">
+          <button id="keyShow" class="ghost" aria-label="Afficher la clé">👁</button>
+        </div>
+        <div class="row-btns">
+          <button id="keySave" class="primary small">Enregistrer</button>
+          <button id="keyTest" class="secondary small">Tester</button>
+        </div>
+        <p id="keyStatus" class="muted"></p>
+      </div>
+      <div class="card">
+        <h2>Ton rythme de marche</h2>
+        <p class="muted">Sert à estimer la durée des boucles.</p>
+        <select id="pace">
+          <option value="3.5">Tranquille · 3,5 km/h</option>
+          <option value="4">Promenade · 4 km/h</option>
+          <option value="4.5">Normal · 4,5 km/h</option>
+          <option value="5">Rapide · 5 km/h</option>
+          <option value="5.5">Sportif · 5,5 km/h</option>
+        </select>
+      </div>
+      <div class="card">
+        <h2>Cartes hors ligne</h2>
+        <p id="storageInfo" class="muted">Calcul…</p>
+        <button id="clearTiles" class="danger small">Vider les cartes téléchargées</button>
+      </div>
+      <div class="card">
+        <h2>Bon à savoir</h2>
+        <ul class="muted tight">
+          <li>Pendant une rando, garde l'écran allumé : l'iPhone met en pause le GPS des applis web quand l'écran se verrouille. L'appli essaie de l'empêcher de s'éteindre tout seul.</li>
+          <li>Les boucles se calculent avec du réseau (Wi-Fi ou 4G). Ensuite, tout marche sans.</li>
+          <li>Carte © IGN · Itinéraires © openrouteservice, données OpenStreetMap.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- RANDO EN COURS -->
+    <div class="view" data-view="hike" hidden>
+      <div class="hike-head">
+        <div>
+          <p class="eyebrow" id="hikeState">En cours</p>
+          <h1 id="hikeName">Rando</h1>
+        </div>
+        <span id="gpsDot" class="gps-dot" title="GPS"></span>
+      </div>
+      <div class="hike-stats">
+        <div><b id="hTime">0:00:00</b><span>durée</span></div>
+        <div><b id="hDist">0,0</b><span>km faits</span></div>
+        <div><b id="hLeft">–</b><span>km restants</span></div>
+        <div><b id="hUp">0</b><span>m de montée</span></div>
+      </div>
+      <div class="row-btns">
+        <button id="hPause" class="secondary">Pause</button>
+        <button id="hStop" class="danger">Terminer</button>
+      </div>
+      <p class="hint" id="wakeHint">Garde l'écran allumé pour que le GPS continue d'enregistrer.</p>
+    </div>
+
+  </div>
+</section>
+
+<nav id="tabs">
+  <button data-tab="explore" class="active"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg><span>Explorer</span></button>
+  <button data-tab="routes"><svg viewBox="0 0 24 24"><path d="M5 19c0-4 4-4 4-8a3 3 0 10-6 0c0 4 4 4 4 8"/><path d="M9 19h6a3 3 0 000-6h-2a3 3 0 010-6h4"/></svg><span>Mes boucles</span></button>
+  <button data-tab="history"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Historique</span></button>
+  <button data-tab="settings"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span>Réglages</span></button>
+</nav>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
