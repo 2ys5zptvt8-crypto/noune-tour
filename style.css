@@ -196,3 +196,5 @@ a.btn.disabled{opacity:.45;pointer-events:none}
 
 body.sheet-high .fab{opacity:0;pointer-events:none}
 .fab{transition:bottom .25s,opacity .2s}
+
+.brand{font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:15px;color:var(--accent);margin:4px 0 0;letter-spacing:.01em}

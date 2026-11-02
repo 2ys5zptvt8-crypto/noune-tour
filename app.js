@@ -1,5 +1,5 @@
 'use strict';
-/* Sentiers — boucles de randonnée autour de soi, carte hors ligne, enregistrement GPS.
+/* Les Boucles de Noune — boucles de randonnée autour de soi, carte hors ligne, enregistrement GPS.
    Tout est stocké sur le téléphone (localStorage + Cache API). */
 
 const ORS_URL = 'https://api.openrouteservice.org/v2/directions/foot-hiking/geojson';
