@@ -375,7 +375,7 @@ $('#handle').onclick = () => setSheet(sheetMode === 'mid' ? 'high' : sheetMode =
 })();
 function fitTo(latlngs) { // cadre un tracé dans la partie visible au-dessus du bandeau
   if (!latlngs || latlngs.length < 2) return;
-  map.fitBounds(L.latLngBounds(latlngs), { paddingTopLeft: [30, 80], paddingBottomRight: [30, sheetPx(sheetMode) + 30] });
+  map.fitBounds(L.latLngBounds(latlngs), { paddingTopLeft: [30, 80], paddingBottomRight: [30, sheetPx(sheetMode) + (state.hike ? 0 : 58) + 30] });
 }
 function revealCard(card) { if (!card) return; setTimeout(() => { $('.sheet-body').scrollTo({ top: card.offsetTop - 6, behavior: 'smooth' }); }, 60); }
 

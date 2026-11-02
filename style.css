@@ -1,7 +1,7 @@
 :root{
   --forest:#1f3a2e; --moss:#3f6b4f; --paper:#f7f5ef; --card:#ffffff; --ink:#1c241f; --muted:#69736c;
   --line:#e3e0d6; --accent:#d9480f; --danger:#c92a2a; --ok:#2b8a3e;
-  --tabs-h:64px; --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+  --tabs-h:54px; --safe-b:max(calc(env(safe-area-inset-bottom,0px) - 20px),4px); --safe-t:env(safe-area-inset-top,0px);
 }
 @media (prefers-color-scheme:dark){
   :root{--paper:#161b18;--card:#1f2622;--ink:#eef1ec;--muted:#9aa59d;--line:#2f3832;--forest:#8fc1a0;--moss:#8fc1a0}
@@ -10,7 +10,7 @@
 html,body{margin:0;height:100%;overflow:hidden;background:var(--paper);color:var(--ink);
   font:15px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
 button,input,select{font:inherit;color:inherit}
-#map{position:fixed;inset:0;bottom:calc(var(--tabs-h) + var(--safe-b));background:#dfe6dc}
+#map{position:fixed;inset:0;background:#dfe6dc}
 body.hiking #map{bottom:0}
 
 /* Banner */
@@ -44,7 +44,7 @@ h2{font-size:16px;margin:0 0 4px}
 #tabs{position:fixed;left:0;right:0;bottom:0;z-index:1002;height:calc(var(--tabs-h) + var(--safe-b));padding-bottom:var(--safe-b);
   display:flex;background:var(--card);border-top:1px solid var(--line)}
 body.hiking #tabs{display:none}
-#tabs button{flex:1;border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;color:var(--muted)}
+#tabs button{flex:1;border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10.5px;color:var(--muted);padding-top:4px}
 #tabs svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 #tabs button.active{color:var(--forest);font-weight:600}
 
