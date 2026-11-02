@@ -19,7 +19,16 @@
 <div id="map"></div>
 
 <div id="banner" hidden></div>
-<button id="north" class="fab north" aria-label="Remettre le nord en haut" hidden>
+<button id="sosBtn" class="fab-top sos" aria-label="Urgence">SOS</button>
+<button id="layersBtn" class="fab-top layers" aria-label="Fond de carte">
+  <svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>
+</button>
+<div id="layerMenu" hidden>
+  <button data-base="plan">🗺️ Plan</button>
+  <button data-base="dark">🌙 Plan sombre</button>
+  <button data-base="sat">🛰️ Satellite</button>
+</div>
+<button id="north" class="fab north" aria-label="Boussole : orienter la carte" hidden>
   <svg viewBox="0 0 24 24"><path d="M12 3l4 9h-8z" class="n"/><path d="M12 21l-4-9h8z" class="s"/></svg>
 </button>
 <button id="locate" class="fab" aria-label="Me localiser">
@@ -37,7 +46,13 @@
         Dans Safari : bouton <b>Partager</b> puis <b>Sur l'écran d'accueil</b>. Ouvre ensuite Sentiers depuis son icône : c'est là que tes boucles et ton historique seront gardés.
       </div>
       <h1>Où marcher aujourd'hui&nbsp;?</h1>
-      <p class="muted" id="startInfo">Départ : ta position GPS</p>
+      <div class="start-row"><span class="muted" id="startInfo">Départ : ta position GPS</span><button id="startBtn" class="link">Changer</button></div>
+      <div id="startPanel" class="card" hidden>
+        <input id="addrInput" type="search" placeholder="Adresse, ville, lieu…" autocomplete="off">
+        <div id="addrResults"></div>
+        <div id="placesChips" class="places"></div>
+        <div class="row-btns"><button id="useGps" class="secondary small">📍 Ma position</button><button id="savePlace" class="secondary small">⭐ Enregistrer ce départ</button></div>
+      </div>
       <div class="dist-row">
         <div class="dist-big"><span id="distVal">8</span><small> km</small></div>
         <div class="chips" id="presets">
@@ -45,6 +60,9 @@
         </div>
       </div>
       <input type="range" id="dist" min="2" max="30" step="0.5" value="8" aria-label="Distance en kilomètres">
+      <div class="filters" id="filters">
+        <button data-f="flat">⛰️ Peu de montée</button><button data-f="green">🌳 Nature</button><button data-f="quiet">🤫 Loin des routes</button>
+      </div>
       <button id="search" class="primary">Proposer des boucles</button>
       <p class="hint">Touche la carte pour choisir un autre point de départ.</p>
       <div id="results"></div>
@@ -62,6 +80,7 @@
     <div class="view" data-view="history" hidden>
       <h1>Historique</h1>
       <div id="historyStats" class="stats-strip"></div>
+      <div id="insights"></div>
       <div id="historyList"></div>
     </div>
 
@@ -80,6 +99,20 @@
           <button id="keyTest" class="secondary small">Tester</button>
         </div>
         <p id="keyStatus" class="muted"></p>
+      </div>
+      <div class="card">
+        <h2>Contact d'urgence</h2>
+        <p class="muted">Le bouton <b>SOS</b> lui envoie un SMS avec ta position.</p>
+        <input id="sosInput" type="tel" inputmode="tel" placeholder="06 12 34 56 78" autocomplete="off">
+        <div class="row-btns"><button id="sosSave" class="primary small">Enregistrer</button></div>
+        <p id="sosStatus" class="muted"></p>
+        <p class="muted small-t"><b>Pour qu'il voie ta position en direct :</b> le plus sûr est de l'activer une fois pour toutes dans l'app <b>Localiser</b> → <b>Moi</b> ou <b>Personnes</b> → <b>Partager ma position</b> → choisir le contact → <b>Indéfiniment</b>.</p>
+      </div>
+      <div class="card">
+        <h2>Alerte sonore</h2>
+        <label class="switch-row"><span>Bip si je m'éloigne du parcours</span><input id="soundToggle" type="checkbox"></label>
+        <button id="soundTest" class="secondary small">Écouter l'alerte</button>
+        <p class="muted small-t">Si l'iPhone est en mode silencieux, le son peut être coupé.</p>
       </div>
       <div class="card">
         <h2>Ton rythme de marche</h2>
@@ -138,6 +171,25 @@
   <button data-tab="history"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Historique</span></button>
   <button data-tab="settings"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span>Réglages</span></button>
 </nav>
+
+<div id="sosModal" class="modal" hidden>
+  <div class="modal-card">
+    <h2>🆘 Besoin d'aide&nbsp;?</h2>
+    <p id="sosPos" class="muted">Localisation en cours…</p>
+    <a id="sosSms" class="primary btn">Envoyer ma position par SMS</a>
+    <p id="sosTo" class="muted small-t center"></p>
+    <div class="sos-steps">
+      <b>Pour partager ta position en continu</b>
+      <ol>
+        <li>Envoie le SMS ci-dessus.</li>
+        <li>Dans la conversation, touche le nom du contact tout en haut.</li>
+        <li>Choisis <b>Partager ma position</b>, puis <b>Indéfiniment</b>.</li>
+      </ol>
+    </div>
+    <a href="tel:112" class="danger btn">📞 Appeler le 112</a>
+    <div class="row-btns"><button id="sosSettings" class="ghost small">Changer le contact</button><button id="sosClose" class="ghost small">Fermer</button></div>
+  </div>
+</div>
 
 <div id="toast" role="status" aria-live="polite"></div>
 
