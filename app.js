@@ -59,7 +59,18 @@ function ascentOf(ele) {
 
 /* ---------- Carte ---------- */
 const view0 = store.get('view', { c: [46.6, 2.4], z: 6 });
-const map = L.map('map', { zoomControl: false, attributionControl: true, tap: true }).setView(view0.c, view0.z);
+const map = L.map('map', {
+  zoomControl: false, attributionControl: true,
+  rotate: true, touchRotate: true, rotateControl: false, bearing: 0 // rotation à deux doigts (plugin leaflet-rotate)
+}).setView(view0.c, view0.z);
+const canRotate = typeof map.setBearing === 'function';
+function updateNorth() {
+  const b = canRotate ? map.getBearing() : 0, n = $('#north');
+  const nb = ((b % 360) + 360) % 360;
+  n.hidden = !canRotate || nb < 1 || nb > 359;
+  n.querySelector('svg').style.transform = `rotate(${-b}deg)`;
+}
+if (canRotate) { map.on('rotate', updateNorth); $('#north').onclick = () => { map.setBearing(0); updateNorth(); }; }
 let tiles = makeTiles(false);
 function makeTiles(offline) {
   return L.tileLayer(TILE_URL, {
@@ -127,17 +138,36 @@ function setTab(t) {
   if (t === 'history') renderHistory();
   if (t === 'settings') renderSettings();
   if (t === 'explore') updateStart();
-  setSheet(t === 'explore' && !state.results.length ? 'mid' : 'mid');
+  setSheet('mid');
 }
 document.querySelectorAll('#tabs button').forEach((b) => (b.onclick = () => setTab(b.dataset.tab)));
 let sheetMode = 'mid';
+function sheetPx(m) { return m === 'low' ? 220 : m === 'high' ? innerHeight * 0.78 : (state.hike ? 370 : innerHeight * 0.46); }
 function setSheet(m) {
   sheetMode = m;
-  const h = m === 'low' ? '150px' : m === 'high' ? '78dvh' : (state.hike ? '370px' : '46dvh');
+  const h = m === 'low' ? '220px' : m === 'high' ? '78dvh' : (state.hike ? '370px' : '46dvh');
   document.documentElement.style.setProperty('--sheet-h', h);
   setTimeout(() => map.invalidateSize(), 280);
 }
 $('#handle').onclick = () => setSheet(sheetMode === 'mid' ? 'high' : sheetMode === 'high' ? 'low' : 'mid');
+// Glisser le bandeau vers le haut ou le bas
+(function () {
+  let y0 = null; const order = ['low', 'mid', 'high'];
+  const zone = $('#handle');
+  zone.addEventListener('touchstart', (e) => { y0 = e.touches[0].clientY; }, { passive: true });
+  zone.addEventListener('touchend', (e) => {
+    if (y0 == null) return; const dy = e.changedTouches[0].clientY - y0; y0 = null;
+    if (Math.abs(dy) < 25) return;
+    const i = order.indexOf(sheetMode); setSheet(order[Math.max(0, Math.min(2, i + (dy < 0 ? 1 : -1)))]);
+    e.preventDefault();
+  });
+})();
+// Cadre un tracé dans la partie de carte visible au-dessus du bandeau
+function fitTo(latlngs) {
+  if (!latlngs || latlngs.length < 2) return;
+  map.fitBounds(L.latLngBounds(latlngs), { paddingTopLeft: [30, 70], paddingBottomRight: [30, sheetPx(sheetMode) + 30] });
+}
+function revealCard(card) { if (!card) return; setTimeout(() => { $('.sheet-body').scrollTo({ top: card.offsetTop - 6, behavior: 'smooth' }); }, 60); }
 
 /* ---------- Recherche de boucles ---------- */
 const distInput = $('#dist');
@@ -269,13 +299,17 @@ function drawResults(fit) {
     if (sel) line.bringToFront();
     all.push(...r.latlngs);
   });
-  if (fit) map.fitBounds(L.latLngBounds(all), { padding: [30, 30] });
+  if (fit) fitTo(all);
 }
 function selectResult(i) {
   state.selected = state.selected === i ? -1 : i;
   document.querySelectorAll('#results .rcard').forEach((c, k) => c.classList.toggle('sel', k === state.selected));
   drawResults(false);
-  if (state.selected >= 0) map.fitBounds(L.latLngBounds(state.results[i].latlngs), { padding: [30, 30] });
+  if (state.selected >= 0) {
+    setSheet('low');
+    fitTo(state.results[i].latlngs);
+    revealCard(document.querySelectorAll('#results .rcard')[i]);
+  } else { setSheet('mid'); drawResults(true); }
 }
 
 /* ---------- Boucles gardées & tuiles hors ligne ---------- */
@@ -353,7 +387,7 @@ function renderRoutes() {
       <button class="primary" data-act="go">Démarrer</button>
       ${r.offline ? '' : '<button class="secondary" data-act="dl">Télécharger</button>'}
       <button class="ghost" data-act="del" aria-label="Supprimer">🗑</button></div><div class="progress" hidden><i></i></div>`);
-    el.onclick = (e) => { if (e.target.closest('button')) return; showRoute(r, color); };
+    el.onclick = (e) => { if (e.target.closest('button')) return; showRoute(r, color, el); };
     el.querySelector('[data-act=go]').onclick = () => startHike(r);
     el.querySelector('[data-act=del]').onclick = () => {
       if (!confirm(`Supprimer « ${r.name} » ?`)) return;
@@ -368,11 +402,11 @@ function renderRoutes() {
     box.appendChild(el);
   });
 }
-function showRoute(r, color) {
+function showRoute(r, color, card) {
   layers.route.clearLayers();
   L.polyline(r.latlngs, { color: color || '#d9480f', weight: 5 }).addTo(layers.route);
   L.marker(r.latlngs[0], { icon: startIcon, interactive: false }).addTo(layers.route);
-  map.fitBounds(L.latLngBounds(r.latlngs), { padding: [30, 30] });
+  setSheet('low'); fitTo(r.latlngs); revealCard(card);
 }
 $('#freeHike').onclick = () => startHike(null);
 
@@ -406,7 +440,7 @@ function startHike(route, resume) {
   if (h.route) {
     L.polyline(h.route.latlngs, { color: '#d9480f', weight: 6, opacity: 0.75 }).addTo(layers.route);
     L.marker(h.route.latlngs[0], { icon: startIcon, interactive: false }).addTo(layers.route);
-    map.fitBounds(L.latLngBounds(h.route.latlngs), { padding: [30, 30] });
+    fitTo(h.route.latlngs);
   }
   state.trackLine = L.polyline(h.pts.map((p) => [p[0], p[1]]), { color: '#1971c2', weight: 4 }).addTo(layers.track);
   state.follow = true; $('#locate').classList.add('follow');
@@ -521,7 +555,7 @@ function renderHistory() {
       layers.track.clearLayers();
       if (h.track.length < 2) { toast('Tracé trop court'); return; }
       L.polyline(h.track, { color: '#1971c2', weight: 5 }).addTo(layers.track);
-      map.fitBounds(L.latLngBounds(h.track), { padding: [30, 30] }); setSheet('low');
+      setSheet('low'); fitTo(h.track); revealCard(el);
     };
     el.querySelector('[data-act=del]').onclick = () => {
       if (!confirm('Supprimer cette rando de l\'historique ?')) return;
@@ -567,7 +601,18 @@ function updateNet() { if (state.hike) return; banner(navigator.onLine ? null : 
 window.addEventListener('online', updateNet); window.addEventListener('offline', updateNet);
 const standalone = navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
 if (!standalone && /iphone|ipad|ipod/i.test(navigator.userAgent)) $('#installTip').hidden = false;
-if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register('sw.js').then((reg) => reg.update()).catch(() => {});
+  // Nouvelle version installée : on recharge pour l'utiliser tout de suite (sauf en pleine rando)
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloaded) return;
+    if (state.hike) { toast('Mise à jour prête : elle s\'appliquera après la rando'); return; }
+    reloaded = true; location.reload();
+  });
+}
+updateNorth();
 
 setSheet('mid'); updateStart(); updateNet();
 const active = store.get('activeHike', null);

@@ -19,6 +19,9 @@
 <div id="map"></div>
 
 <div id="banner" hidden></div>
+<button id="north" class="fab north" aria-label="Remettre le nord en haut" hidden>
+  <svg viewBox="0 0 24 24"><path d="M12 3l4 9h-8z" class="n"/><path d="M12 21l-4-9h8z" class="s"/></svg>
+</button>
 <button id="locate" class="fab" aria-label="Me localiser">
   <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8" fill="none"/></svg>
 </button>
@@ -139,6 +142,7 @@
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

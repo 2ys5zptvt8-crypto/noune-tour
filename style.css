@@ -119,3 +119,10 @@ select,input[type=password],input[type=text]{width:100%;padding:12px;border-radi
 
 .start-pin{width:22px;height:22px;border-radius:50%;background:var(--accent);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35)}
 .leaflet-control-attribution{font-size:10px}
+
+/* Boussole : remet le nord en haut */
+.fab.north{bottom:calc(var(--sheet-h,46dvh) + var(--tabs-h) + var(--safe-b) + 70px)}
+body.hiking .fab.north{bottom:calc(var(--sheet-h,46dvh) + var(--safe-b) + 70px)}
+.fab.north svg{transition:transform .1s linear}
+.fab.north .n{fill:var(--danger);stroke:none}.fab.north .s{fill:var(--muted);stroke:none}
+.fab[hidden]{display:none}
