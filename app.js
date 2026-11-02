@@ -504,9 +504,10 @@ function renderResults() {
   state.results.forEach((r, i) => {
     const el = document.createElement('div');
     el.className = 'rcard' + (state.selected === i ? ' sel' : ''); el.style.setProperty('--c', r.color);
-    el.innerHTML = routeCardHTML(r, r.color, `<div class="ractions"><button class="primary" data-act="keep">Garder pour hors ligne</button></div><div class="progress" hidden><i></i></div>`);
+    el.innerHTML = routeCardHTML(r, r.color, `<div class="ractions"><button class="secondary" data-act="go">▶ Démarrer</button><button class="primary" data-act="keep">Garder hors ligne</button></div><div class="progress" hidden><i></i></div>`);
     el.onclick = (e) => { if (e.target.closest('button')) return; selectResult(i); };
     el.querySelector('[data-act=keep]').onclick = (e) => keepRoute(r, el, e.currentTarget);
+    el.querySelector('[data-act=go]').onclick = () => startDirect(r);
     box.appendChild(el);
   });
 }
@@ -681,21 +682,31 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('pagehide', () => saveActive());
 
+// Démarrer une boucle proposée tout de suite, sans télécharger sa carte
+function startDirect(r) {
+  const saved = r.savedId && state.routes.find((x) => x.id === r.savedId);
+  if (saved) { unlockAudio(); startHike(saved); return; }
+  if (!navigator.onLine && !confirm('Pas de réseau : la carte risque de ne pas s\'afficher (le tracé et le GPS fonctionneront). Démarrer quand même ?')) return;
+  unlockAudio();
+  startHike({ id: null, name: r.name, latlngs: r.latlngs, ele: r.ele, distance: r.distance, ascent: r.ascent, pois: r.pois || null, offline: false });
+  if (!r.pois) loadPois(r).then((p) => { if (p && state.hike && state.hike.routeData) { state.hike.routeData.pois = p; drawPois(p); saveActive(); } });
+}
 function startHike(route, resume) {
   if (state.hike && !resume) return;
   if (!resume) {
-    state.hike = { id: uid(), routeId: route ? route.id : null, name: route ? route.name : 'Rando libre', startedAt: Date.now(),
+    state.hike = { id: uid(), routeId: route ? route.id : null, routeData: route && !route.id ? route : null, name: route ? route.name : 'Rando libre', startedAt: Date.now(),
       elapsed: 0, running: true, resumedAt: Date.now(), pts: [], distance: 0, ascent: 0, refAlt: null, idx: 0 };
     store.set('activeHike', state.hike);
   }
   const h = state.hike;
-  h.route = h.routeId ? state.routes.find((r) => r.id === h.routeId) : null;
+  h.route = h.routeData || (h.routeId ? state.routes.find((r) => r.id === h.routeId) : null);
   if (h.route) h.cum = cumDist(h.route.latlngs);
   document.body.classList.add('hiking');
   document.querySelectorAll('.view').forEach((v) => { v.hidden = v.dataset.view !== 'hike'; });
   $('#hikeName').textContent = h.name;
   layers.results.clearLayers(); layers.route.clearLayers(); layers.track.clearLayers(); clearFocus();
-  setOfflineTiles(true);
+  setOfflineTiles(!!(h.route && h.route.offline));
+  if (h.route && !h.route.offline) setTimeout(() => toast('Carte non téléchargée : elle s\'affichera tant que tu as du réseau', 4500), 800);
   if (h.route) {
     L.polyline(h.route.latlngs, { color: '#d9480f', weight: 6, opacity: 0.8 }).addTo(layers.route);
     L.marker(h.route.latlngs[0], { icon: startIcon, interactive: false }).addTo(layers.route);

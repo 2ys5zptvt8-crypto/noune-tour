@@ -1,5 +1,5 @@
 /* Service worker : appli disponible hors ligne + cartes téléchargées */
-const SHELL = 'sentiers-shell-v4';
+const SHELL = 'sentiers-shell-v5';
 const TILE_CACHE = 'sentiers-tiles-v1';
 const ASSETS = [
   './', './index.html', './style.css', './app.js', './manifest.webmanifest',
